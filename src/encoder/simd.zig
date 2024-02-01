@@ -25,7 +25,7 @@ pub const U8x16 = @Vector(16, u8);
 pub const U8x32 = @Vector(32, u8);
 pub const U8x64 = @Vector(64, u8);
 
-// TODO(@cancername): I really don't think *both* signed and unknowned-signed versions of this are needed.
+// TODO(@notcancername): I really don't think *both* signed and unknowned-signed versions of this are needed.
 pub fn WideInt(comptime T: type) type {
     return std.meta.Int(@typeInfo(T).Int.signedness, @bitSizeOf(T) * 2);
 }
@@ -62,7 +62,7 @@ pub fn WideIntVecS(comptime T: type, comptime s: std.builtin.Signedness) type {
     return @Vector(@divExact(l, 2), WideIntS(C, s));
 }
 
-// TODO(@cancername): Fix this for RISCV.
+// TODO(@notcancername): Fix this for RISCV.
 pub inline fn truncateVecRetarded(comptime D: type, comptime start: comptime_int, v: anytype) D {
     const d = @typeInfo(D).Vector;
     const mask: [d.len]i32 = comptime generate_mask: {
@@ -80,7 +80,7 @@ pub const cur_cpu = @import("builtin").cpu;
 pub const cur_features = Features.get(cur_cpu);
 
 pub const Features = struct {
-    // TODO(@cancername): All vector sets in std.Target.x86, std.Target.aarch64, and
+    // TODO(@notcancername): All vector sets in std.Target.x86, std.Target.aarch64, and
     // std.Target.riscv should be listed here, even if they are unused.
     have_mmx: bool = false,
     have_sse: bool = false,
@@ -267,12 +267,12 @@ pub inline fn reduceGenericHoriz(comptime T: type, comptime horiz: anytype, v: T
 }
 
 pub inline fn reduceAdd(comptime T: type, v: T) @typeInfo(T).Vector.child {
-    // TODO(@cancername): optimize for applicable architectures
+    // TODO(@notcancername): optimize for applicable architectures
     return reduceGenericHoriz(T, hadd, v);
 }
 
 pub inline fn reduceAddSat(comptime T: type, v: T) @typeInfo(T).Vector.child {
-    // TODO(@cancername): optimize for applicable architectures
+    // TODO(@notcancername): optimize for applicable architectures
     return reduceGenericHoriz(T, hadds, v);
 }
 

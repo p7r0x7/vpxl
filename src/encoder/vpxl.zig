@@ -31,17 +31,17 @@ pub fn FrameBuffer(comptime Depth: type, width: usize, height: usize, ally: mem.
         y: ?PlaneBuffer,
         u: ?PlaneBuffer,
         v: ?PlaneBuffer,
-        r: ?PlaneBuffer,
+        a: ?PlaneBuffer,
         g: ?PlaneBuffer,
         b: ?PlaneBuffer,
-        a: ?PlaneBuffer,
+        r: ?PlaneBuffer,
 
         pub fn isRGB(f: *@This()) bool {
             return f.y.data == null;
         }
 
         pub fn deinit(f: *@This()) void {
-            inline for (.{ f.y, f.u, f.v, f.r, f.g, f.b, f.a }) |p| p.deinit();
+            inline for (.{ f.y, f.u, f.v, f.a, f.g, f.b, f.r }) |p| p.deinit();
         }
     };
 }
