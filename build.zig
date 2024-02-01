@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright © 2023 The VPXL Contributors. All rights reserved.
+// Contributors responsible for this file:
+// @p7r0x7 <mattrbonnette@pm.me>
+
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {

@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright © 2023 The VPXL Contributors. All rights reserved.
+// Contributors responsible for this file:
+// @p7r0x7 <mattrbonnette@pm.me>
+
 const default_scan_4x4 = [16]u4{ 0, 4, 1, 5, 8, 2, 12, 9, 3, 6, 13, 10, 7, 14, 11, 15 };
 
 const col_scan_4x4 = [16]u4{ 0, 4, 8, 1, 12, 5, 9, 2, 13, 6, 10, 3, 7, 14, 11, 15 };

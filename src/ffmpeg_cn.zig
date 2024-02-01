@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright © 2023 The VPXL Contributors. All rights reserved.
+// Contributors responsible for this file:
+// @notcancername <notcancername@protonmail.com>
+
 const std = @import("std");
 const mem = std.mem;
 const os = std.os;
@@ -2030,10 +2035,7 @@ pub const Exec = struct {
         }
     }
 
-    pub fn buildCmdline(
-        exec: *const Exec,
-        ally: mem.Allocator,
-    ) mem.Allocator.Error![][]u8 {
+    pub fn buildCmdline(exec: *const Exec, ally: mem.Allocator) mem.Allocator.Error![][]u8 {
         var out = std.ArrayList([]u8).init(ally);
         defer out.deinit();
         errdefer for (out.items) |s| ally.free(s);

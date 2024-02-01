@@ -1,10 +1,15 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright © 2023 The VPXL Contributors. All rights reserved.
+// Contributors responsible for this file:
+// @p7r0x7 <mattrbonnette@pm.me>
+
 .{
     .name = "vpxl",
     .version = "0.0.0",
     .dependencies = .{
         .cova = .{
-            .url = "https://github.com/00JCIV00/cova/archive/7372d8005096215b75acdd5bc4848d79590f7ffc.tar.gz",
-            .hash = "1220120047003724ac4f2d6a9edd9ae6c9a8cc1437ef54204092fab23b17b14b7111",
+            .url = "https://github.com/00JCIV00/cova/archive/4f23c3d5b35de6833527b8692763ab1984b99baf.tar.gz",
+            .hash = "1220dfc8ce262a90bcf20eac90b3ef2a0404d831641e6bdac669a7cbcc03c2513561",
         },
     },
     .paths = .{""},

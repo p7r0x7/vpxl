@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright © 2023 The VPXL Contributors. All rights reserved.
+// Contributors responsible for this file:
+// @p7r0x7 <mattrbonnette@pm.me>
+
 const std = @import("std");
 const proc = @import("std").process;
 const mem = @import("std").mem;
@@ -9,5 +14,5 @@ pub fn queryFFMPEG(ally: mem.Allocator) !void {
     const d = proc.Child;
     _ = d;
     std.fs.path
-        .d.init([_][]const u8{"ffmpeg"}, ally);
+        d.init([_][]const u8{"ffmpeg"}, ally);
 }

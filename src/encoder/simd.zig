@@ -1,29 +1,33 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright © 2023 The VPXL Contributors. All rights reserved.
+// Contributors responsible for this file:
+// @notcancername <notcancername@protonmail.com>
+// @p7r0x7 <mattrbonnette@pm.me>
+
 const std = @import("std");
 const assert = std.debug.assert;
 
 const root = @import("root");
 const error_if_non_native = if (@hasDecl(root, "simd_error_if_non_native")) root.simd_error_if_non_native else false;
 
-pub const I16x4 = @Vector(4, i16);
-pub const I16x8 = @Vector(8, i16);
-
-pub const I16x16 = @Vector(16, i16);
-pub const I16x32 = @Vector(32, i16);
-
-pub const U16x4 = @Vector(4, u16);
-pub const U16x8 = @Vector(8, u16);
-pub const U16x16 = @Vector(16, u16);
-pub const U16x32 = @Vector(32, u16);
-
-pub const I32x2 = @Vector(2, i32);
-pub const I32x4 = @Vector(4, i32);
-pub const I32x8 = @Vector(8, i32);
-pub const I32x16 = @Vector(16, i32);
-
-pub const U8x8 = @Vector(8, u8);
-pub const U8x16 = @Vector(16, u8);
-pub const U8x32 = @Vector(32, u8);
-pub const U8x64 = @Vector(64, u8);
+// zig fmt: off
+pub const U8x8   = @Vector(8,   u8); //  64 bits
+pub const U8x16  = @Vector(16,  u8); // 128 bits
+pub const U8x32  = @Vector(32,  u8); // 256 bits
+pub const U8x64  = @Vector(64,  u8); // 512 bits
+pub const U16x4  = @Vector(4,  u16); //  64 bits
+pub const U16x8  = @Vector(8,  u16); // 128 bits
+pub const U16x16 = @Vector(16, u16); // 256 bits
+pub const U16x32 = @Vector(32, u16); // 512 bits
+pub const I16x4  = @Vector(4,  i16); //  64 bits
+pub const I16x8  = @Vector(8,  i16); // 128 bits
+pub const I16x16 = @Vector(16, i16); // 256 bits
+pub const I16x32 = @Vector(32, i16); // 512 bits
+pub const I32x2  = @Vector(2,  i32); //  64 bits
+pub const I32x4  = @Vector(4,  i32); // 128 bits
+pub const I32x8  = @Vector(8,  i32); // 256 bits
+pub const I32x16 = @Vector(16, i32); // 512 bits
+// zig fmt: on
 
 // TODO(@notcancername): I really don't think *both* signed and unknowned-signed versions of this are needed.
 pub fn WideInt(comptime T: type) type {
@@ -67,7 +71,7 @@ pub inline fn truncateVecRetarded(comptime D: type, comptime start: comptime_int
     const d = @typeInfo(D).Vector;
     const mask: [d.len]i32 = comptime generate_mask: {
         var tmp: [d.len]i32 = undefined;
-        inline for (0..d.len, start..) |j, i| tmp[j] = i;
+        for (0..d.len, start..) |j, i| tmp[j] = i;
         break :generate_mask tmp;
     };
 
@@ -136,7 +140,7 @@ pub const Features = struct {
             .have_hard_f32 = std.Target.riscv.featureSetHas(cpu.features, .f),
             .have_hard_f64 = std.Target.riscv.featureSetHas(cpu.features, .d),
             .have_hard_mul = std.Target.riscv.featureSetHas(cpu.features, .m),
-        } else .{}; // :catconcern:
+        };
         // zig fmt: on
     }
 
@@ -166,7 +170,7 @@ inline fn interleave(comptime T: type, a: T, b: T) struct { T, T } {
     const ti = @typeInfo(T).Vector;
     const shuf = comptime b: {
         var tmp: [ti.len * 2]i32 = undefined;
-        inline for (0..ti.len) |e| {
+        for (0..ti.len) |e| {
             tmp[e * 2], tmp[e * 2 + 1] = .{ @as(i32, e), ~@as(i32, e) };
         }
         break :b tmp;
