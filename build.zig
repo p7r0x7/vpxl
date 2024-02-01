@@ -17,11 +17,13 @@ pub fn build(b: *std.Build) void {
 
     // Dependencies
     const cova = b.dependency("cova", .{ .target = target, .optimize = optimize });
-    exe.addModule("cova", cova.module("cova"));
+    exe.root_module.addImport("cova", cova.module("cova"));
+    //const ziglyph = b.dependency("ziglyph", .{ .target = target, .optimize = optimize });
+    //exe.root_module.addImport("ziglyph", ziglyph.module("ziglyph"));
 
+    exe.root_module.strip = optimize != .Debug;
     exe.link_gc_sections = optimize != .Debug;
-    exe.want_lto = !target.isDarwin(); // https://github.com/ziglang/zig/issues/8680
-    exe.strip = optimize != .Debug;
+    exe.want_lto = !target.result.isDarwin(); // https://github.com/ziglang/zig/issues/8680
     b.installArtifact(exe);
 
     // Enable `zig build run`

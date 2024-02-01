@@ -218,7 +218,7 @@ fn mulAddVector(p1: I16x8, p2: I16x8, scale: I16x8, tmp1: *I32x4, tmp2: *I32x4, 
     _ = p1;
 }
 
-fn filterAndDecimateVector(xAct: isize, yAct: isize, wAct: isize, hAct: isize, o: []i16, O: isize) u64 {
+fn filterAndDownsampleVector(xAct: isize, yAct: isize, wAct: isize, hAct: isize, o: []i16, O: isize) u64 {
     var saAct: u64 = 0;
 
     if (wAct > 12) {
@@ -291,12 +291,12 @@ fn filterAndDecimateVector(xAct: isize, yAct: isize, wAct: isize, hAct: isize, o
             }
         }
     } else {
-        saAct = filterAndDecimateScalar(xAct, yAct, wAct, hAct, o, O); // Input too small for SIMD
+        saAct = filterAndDownsampleScalar(xAct, yAct, wAct, hAct, o, O); // Input too small for SIMD
     }
     return saAct;
 }
 
-fn filterAndDecimateScalar(xAct: isize, yAct: isize, wAct: isize, hAct: isize, o: []i16, O: isize) u64 {
+fn filterAndDownsampleScalar(xAct: isize, yAct: isize, wAct: isize, hAct: isize, o: []i16, O: isize) u64 {
     var saAct: u64 = 0;
     var y: isize = yAct;
     while (y < hAct) : (y += 2) {

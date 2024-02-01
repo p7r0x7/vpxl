@@ -8,9 +8,13 @@
     .version = "0.0.0",
     .dependencies = .{
         .cova = .{
-            .url = "https://github.com/00JCIV00/cova/archive/4f23c3d5b35de6833527b8692763ab1984b99baf.tar.gz",
-            .hash = "1220dfc8ce262a90bcf20eac90b3ef2a0404d831641e6bdac669a7cbcc03c2513561",
+            .url = "https://github.com/00JCIV00/cova/archive/64152f4174f1c310294b9eb836391c1c7f5e0360.tar.gz",
+            .hash = "1220b4289398774725a767a128179c96ae9707b756b0c02219befc7694be331712f4",
         },
+        //.ziglyph = .{
+        //    .url = "https://codeberg.org/dude_the_builder/ziglyph/archive/ac50ab06c91d2dd632ff4573c035dafe3b374aba.tar.gz",
+        //    .hash = "1220e097fbfb3a15a6f3484cf507f1f10ab571d1bcf519c3b5447ca727782b7a5264",
+        //},
     },
     .paths = .{""},
 }

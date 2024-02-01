@@ -12,7 +12,13 @@ const mem = @import("std").mem;
 
 pub fn queryFFMPEG(ally: mem.Allocator) !void {
     const d = proc.Child;
-    _ = d;
-    std.fs.path
-        d.init([_][]const u8{"ffmpeg"}, ally);
+    d.init([_][]const u8{"ffmpeg"}, ally);
+
+    const child = try proc.ChildProcess.init(
+        ally,
+        [_][]const u8{ "ffmpeg", "-i", "input.mp4", "-c:v", "libx264", "-crf", "23", "-c:a", "aac", "-b:a", "128k", "output.mp4" },
+        [_]proc.ChildProcess.Stdio{ .stdin = proc.ChildProcess.Stdio.inherit },
+    );
+    try child.spawn();
+    try child.wait();
 }
