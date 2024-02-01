@@ -2,11 +2,7 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{
-        .preferred_optimize_mode = std.builtin.OptimizeMode.ReleaseSafe,
-        // NB: Hot codepaths that have been safety-tested will have runtime safety disabled.
-        // Other modes are not currently recommended, and *may even* generate slower code.
-    });
+    const optimize = b.standardOptimizeOption(.{});
     const exe = b.addExecutable(.{
         .name = "vpxl",
         .root_source_file = .{ .path = "src/main.zig" },
@@ -17,9 +13,8 @@ pub fn build(b: *std.Build) void {
     // Dependencies
     const cova = b.dependency("cova", .{ .target = target, .optimize = optimize });
     exe.addModule("cova", cova.module("cova"));
-    exe.linkSystemLibrary("zimg");
-    exe.strip = true;
 
+    exe.strip = optimize != .Debug;
     b.installArtifact(exe);
 
     // Enable `zig build run`

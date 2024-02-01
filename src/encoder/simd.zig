@@ -109,8 +109,8 @@ pub const Features = struct {
     have_hard_mul: bool = false,
 
     pub fn get(cpu: std.Target.Cpu) Features {
+        // zig fmt: off
         return if (cpu.arch.isX86()) .{
-            // zig fmt: off
             .have_mmx      = std.Target.x86.featureSetHas(cpu.features, .mmx),
             .have_sse      = std.Target.x86.featureSetHas(cpu.features, .sse),
             .have_sse2     = std.Target.x86.featureSetHas(cpu.features, .sse2),
@@ -122,16 +122,12 @@ pub const Features = struct {
             .have_avx512bw = std.Target.x86.featureSetHas(cpu.features, .avx512bw),
             .have_avx512f  = std.Target.x86.featureSetHas(cpu.features, .avx512f),
             .have_hard_mul = true,
-            // zig fmt: on
         } else if (cpu.arch.isArmOrThumb()) .{
-            // zig fmt: off
             .have_neon         = std.Target.arm.featureSetHas(cpu.features, .neon),
             .have_neon_fp      = std.Target.arm.featureSetHas(cpu.features, .neonfp),
             .have_neon_fp_movs = std.Target.arm.featureSetHas(cpu.features, .neon_fpmovs),
             .have_hard_mul     = std.Target.arm.featureSetHas(cpu.features, .mul),
-            // zig fmt: on
         } else if (cpu.arch.isRISCV()) .{
-            // zig fmt: off
             .have_rvv_32   = std.Target.riscv.featureSetHas(cpu.features, .zvl32b),
             .have_rvv_64   = std.Target.riscv.featureSetHas(cpu.features, .zvl64b),
             .have_rvv_128  = std.Target.riscv.featureSetHas(cpu.features, .zvl128b),
@@ -140,8 +136,8 @@ pub const Features = struct {
             .have_hard_f32 = std.Target.riscv.featureSetHas(cpu.features, .f),
             .have_hard_f64 = std.Target.riscv.featureSetHas(cpu.features, .d),
             .have_hard_mul = std.Target.riscv.featureSetHas(cpu.features, .m),
-            // zig fmt: on
         } else .{}; // :catconcern:
+        // zig fmt: on
     }
 
     pub fn supportsVectorBits(f: Features, bits: usize) bool {
@@ -271,12 +267,12 @@ pub inline fn reduceGenericHoriz(comptime T: type, comptime horiz: anytype, v: T
 }
 
 pub inline fn reduceAdd(comptime T: type, v: T) @typeInfo(T).Vector.child {
-    // TODO(@cancername):
+    // TODO(@cancername): optimize for applicable architectures
     return reduceGenericHoriz(T, hadd, v);
 }
 
 pub inline fn reduceAddSat(comptime T: type, v: T) @typeInfo(T).Vector.child {
-    // TODO optimize for good architectures
+    // TODO(@cancername): optimize for applicable architectures
     return reduceGenericHoriz(T, hadds, v);
 }
 
