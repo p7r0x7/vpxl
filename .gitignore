@@ -1,0 +1,8 @@
+**/.DS_Store
+**/.localized
+zig-cache/
+zig-out/
+**/intra_pred.pdf
+**/lc_trellis.pdf
+**/xpsnr.pdf
+**/fssim.pdf
