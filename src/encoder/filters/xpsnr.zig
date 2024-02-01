@@ -36,7 +36,6 @@ const math = @import("std").math;
 
 pub fn Calculator(comptime T: type) type {
     _ = T;
-
 }
 
 const XPSNRCalculator = struct {

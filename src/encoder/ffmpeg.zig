@@ -1,8 +1,10 @@
 const std = @import("std");
 const proc = @import("std").process;
+const mem = @import("std").mem;
 
-pub fn queryFFMPEG() !void {
-    var d = proc.Child;
-    d.init(argv: []const []const u8, allocator: mem.Allocator)
+pub fn queryFFMPEG(ally: mem.Allocator) !void {
+    const d = proc.Child;
     _ = d;
-}   
+    std.fs.path
+        .d.init([_][]const u8{"ffmpeg"}, ally);
+}
