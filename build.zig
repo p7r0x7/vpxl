@@ -14,9 +14,9 @@ pub fn build(b: *std.Build) void {
     const cova = b.dependency("cova", .{ .target = target, .optimize = optimize });
     exe.addModule("cova", cova.module("cova"));
 
+    exe.link_gc_sections = optimize != .Debug;
     exe.want_lto = !target.isDarwin(); // https://github.com/ziglang/zig/issues/8680
     exe.strip = optimize != .Debug;
-    exe.link_gc_sections = true;
     b.installArtifact(exe);
 
     // Enable `zig build run`

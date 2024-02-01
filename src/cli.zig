@@ -12,68 +12,69 @@ const builtin = @import("builtin");
 pub const CommandT = cova.Command.Custom(.{
     .global_usage_fn = struct {
         fn usage(root: anytype, wr: anytype, _: mem.Allocator) !void {
-            defer _ = wr.write(ns ++ ns) catch unreachable;
-            _ = wr.write("USAGE   ") catch unreachable;
-            _ = wr.write(root.name) catch unreachable;
+            _ = try wr.write("USAGE   ");
+            _ = try wr.write(root.name);
+            _ = try wr.write("   [");
+
+            _ = try wr.write(ns ++ ns);
         }
     }.usage,
     .global_help_fn = struct {
         fn help(root: anytype, wr: anytype, _: mem.Allocator) !void {
             const indent = @TypeOf(root.*).indent_fmt;
 
-            _ = root.usage(wr) catch unreachable;
+            _ = try root.usage(wr);
 
-            _ = wr.write("(SUB)COMMANDS" ++ ns ++ ns ++ indent ++ indent) catch unreachable;
-            _ = wr.write(root.name) catch unreachable;
-            _ = wr.write(": ") catch unreachable;
-            if (active_scheme.one) |v| _ = wr.write(v) catch unreachable;
-            _ = wr.write(root.description) catch unreachable;
-            if (active_scheme.one) |_| _ = wr.write(zero) catch unreachable;
-            _ = wr.write(ns ++ ns) catch unreachable;
+            _ = try wr.write("(SUB)COMMANDS" ++ ns ++ ns ++ indent ++ indent);
+            _ = try wr.write(root.name);
+            _ = try wr.write(": ");
+            if (active_scheme.one) |v| _ = try wr.write(v);
+            _ = try wr.write(root.description);
+            if (active_scheme.one) |_| _ = try wr.write(zero);
+            _ = try wr.write(ns ++ ns);
 
             if (root.sub_cmds) |cmds| {
                 for (cmds) |cmd| {
                     if (cmd.hidden) continue;
-                    _ = wr.write(indent ++ indent) catch unreachable;
-                    _ = wr.write(cmd.name) catch unreachable;
-                    _ = wr.write(": ") catch unreachable;
-                    if (active_scheme.two) |v| _ = wr.write(v) catch unreachable;
-                    _ = wr.write(cmd.description) catch unreachable;
-                    if (active_scheme.two) |_| _ = wr.write(zero) catch unreachable;
-                    _ = wr.writeByte(nb) catch unreachable;
+                    _ = try wr.write(indent ++ indent);
+                    _ = try wr.write(cmd.name);
+                    _ = try wr.write(": ");
+                    if (active_scheme.two) |v| _ = try wr.write(v);
+                    _ = try wr.write(cmd.description);
+                    if (active_scheme.two) |_| _ = try wr.write(zero);
+                    _ = try wr.writeByte(nb);
                 }
-                _ = wr.writeByte(nb) catch unreachable;
+                _ = try wr.writeByte(nb);
             }
             if (root.opts) |opts| {
-                _ = wr.write("OPTIONS" ++ ns ++ ns) catch unreachable;
+                _ = try wr.write("OPTIONS" ++ ns ++ ns);
                 for (opts) |opt| {
                     if (opt.hidden) continue;
-                    opt.help(wr) catch unreachable;
-                    _ = wr.writeByte(nb) catch unreachable;
+                    try opt.help(wr);
+                    try wr.writeByte(nb);
                 }
-                _ = wr.writeByte(nb) catch unreachable;
             }
         }
     }.help,
     .opt_config = .{
         .global_usage_fn = struct {
             pub fn usage(opt: anytype, wr: anytype, _: mem.Allocator) !void {
-                _ = wr.write(@TypeOf(opt.*).long_prefix.?) catch unreachable;
-                _ = wr.write(opt.long_name.?) catch unreachable;
-                _ = wr.writeByte(' ') catch unreachable;
+                _ = try wr.write(@TypeOf(opt.*).long_prefix.?);
+                _ = try wr.write(opt.long_name.?);
+                _ = try wr.writeByte(' ');
 
-                if (active_scheme.one) |v| _ = wr.write(v) catch unreachable;
-                _ = wr.writeByte('"') catch unreachable;
+                if (active_scheme.one) |v| _ = try wr.write(v);
+                _ = try wr.writeByte('"');
                 const val_name = opt.val.name();
                 if (val_name.len > 0) {
-                    _ = wr.write(val_name) catch unreachable;
-                    _ = wr.writeByte(' ') catch unreachable;
+                    _ = try wr.write(val_name);
+                    _ = try wr.writeByte(' ');
                 }
-                _ = wr.writeByte('(') catch unreachable;
+                _ = try wr.writeByte('(');
                 const child_type = opt.val.childType();
-                _ = wr.write(child_type) catch unreachable;
-                _ = wr.write(")\"") catch unreachable;
-                if (active_scheme.one) |_| _ = wr.write(zero) catch unreachable;
+                _ = try wr.write(child_type);
+                _ = try wr.write(")\"");
+                if (active_scheme.one) |_| _ = try wr.write(zero);
 
                 var default_as_string: ?[]const u8 = null;
                 if (mem.eql(u8, child_type, "[]const u8")) {
@@ -85,24 +86,24 @@ pub const CommandT = cova.Command.Custom(.{
                         null;
                 }
                 if (default_as_string) |str| {
-                    _ = wr.write(" default: ") catch unreachable;
-                    _ = wr.write(str) catch unreachable;
+                    _ = try wr.write(" default: ");
+                    _ = try wr.write(str);
                 }
             }
         }.usage,
         .global_help_fn = struct {
             pub fn help(opt: anytype, wr: anytype, _: mem.Allocator) !void {
                 const indent = @TypeOf(opt.*).indent_fmt.?;
-                _ = wr.write(indent) catch unreachable;
-                opt.usage(wr) catch unreachable;
+                _ = try wr.write(indent);
+                try opt.usage(wr);
                 var it = mem.splitScalar(u8, opt.description, nb);
                 while (it.next()) |line| {
-                    _ = wr.write(ns ++ indent) catch unreachable;
-                    if (active_scheme.two) |v| _ = wr.write(v) catch unreachable;
-                    _ = wr.write(line) catch unreachable;
-                    if (active_scheme.two) |_| _ = wr.write(zero) catch unreachable;
+                    _ = try wr.write(ns ++ indent);
+                    if (active_scheme.two) |v| _ = try wr.write(v);
+                    _ = try wr.write(line);
+                    if (active_scheme.two) |_| _ = try wr.write(zero);
                 }
-                _ = wr.writeByte(nb) catch unreachable;
+                _ = try wr.writeByte(nb);
             }
         }.help,
         .allow_abbreviated_long_opts = false,
@@ -265,7 +266,7 @@ const vpxl_cmd: CommandT = command(
         ),
         pixelFormatOption("pix", "yuv420p10le",
             \\Utilizing the source frames' full bit depth during encoding, ensure the compressed output's
-            \\frames are in the given format; VP9 supports the following: yuv420p yuva420p yuv422p yuv440p
+            \\frames are in the given format; VPXL supports encoding to the following: yuv420p yuva420p yuv422p yuv440p
             \\yuv444p yuv420p10le yuv422p10le yuv440p10le yuv444p10le yuv420p12le yuv422p12le yuv440p12le
             \\yuv444p12le gbrp gbrp10le gbrp12le
         ),
@@ -311,17 +312,17 @@ const ColorScheme = struct { one: ?[]const u8 = null, two: ?[]const u8 = null };
 
 var active_scheme = ColorScheme{};
 
-fn configureColorScheme() void {
+fn configureColorScheme() !void {
     // TODO(@p7r0x7): Move this to main() if a PRNG is ever elsewhere required.
     var sfc = rand.Sfc64.init(seed: {
         var tmp: u64 = undefined;
-        os.getrandom(mem.asBytes(&tmp)) catch unreachable;
+        try os.getrandom(mem.asBytes(&tmp));
         break :seed tmp;
     });
     active_scheme = schemes[sfc.random().int(u64) % schemes.len];
 }
 
-fn configureEscapeCodes(pipe: fs.File, it: *cova.ArgIteratorGeneric) void {
+fn configureEscapeCodes(pipe: fs.File, it: *cova.ArgIteratorGeneric) !void {
     const flag: bool = flag: {
         defer it.zig.inner.index = 0;
         while (it.next()) |arg| {
@@ -340,12 +341,12 @@ fn configureEscapeCodes(pipe: fs.File, it: *cova.ArgIteratorGeneric) void {
         break :flag true;
     };
     const available = io.tty.detectConfig(pipe) == .escape_codes;
-    if (available and flag) configureColorScheme();
+    if (available and flag) try configureColorScheme();
 }
 
 pub fn runVPXL(pipe: fs.File, ally: mem.Allocator) !void {
     const wr = pipe.writer();
-    wr.writeByte(nb) catch unreachable;
+    try wr.writeByte(nb);
     defer wr.writeByte(nb) catch unreachable;
     var buffered = io.bufferedWriter(wr);
     const bw = buffered.writer();
@@ -354,20 +355,18 @@ pub fn runVPXL(pipe: fs.File, ally: mem.Allocator) !void {
     const vpxl_cli = try vpxl_cmd.init(ally, .{ .add_help_cmds = false, .add_help_opts = false });
     defer vpxl_cli.deinit();
     var arg_it = try cova.ArgIteratorGeneric.init(ally);
-    configureEscapeCodes(pipe, &arg_it);
+    try configureEscapeCodes(pipe, &arg_it);
     cova.parseArgs(&arg_it, CommandT, &vpxl_cli, bw, .{
+        .skip_exe_name_arg = true,
         .auto_handle_usage_help = false,
         .enable_opt_termination = true,
         .err_reaction = .Help,
-    }) catch |err| switch (err) {
-        else => return err,
-    };
+    }) catch |err| return err;
 
     // Call
-    const no_args = loop: {
-        var count: u16 = 0;
-        while (arg_it.next()) |_| count += 1;
-        break :loop count == 0;
+    const no_args = no_args: {
+        arg_it.zig.inner.index = 1;
+        break :no_args arg_it.next() == null;
     };
     arg_it.deinit();
     if (no_args or vpxl_cli.checkOpts(&[_][]const u8{ "h", "help" }, .{})) {
