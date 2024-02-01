@@ -34,6 +34,7 @@ pub const CommandT = cova.Command.Custom(.{
         .set_behavior = .Last,
         .max_children = 16,
         .arg_delims = ",;",
+        .custom_types = &.{os.fd_t},
     },
 });
 
@@ -55,13 +56,13 @@ const vpxl_cmd: CommandT = command(
     &.{
         command("gloss", "Something to help you navigate this program if you're new to encoding video.", null, null),
         command("xpsnr", "Calculate XPSNR score between two or more (un)compressed inputs.", null, &.{
-            option("in", value("input_path", []const u8, null, parsers.parsePath),
+            option("in", value("input_path", []const u8, null, parsers.parseInPath),
                 \\Path from which (un)compressed frames are to be demuxed and decoded by FFmpeg for scoring.
                 \\This option must be passed more than once.
             ),
         }),
         command("fssim", "Calculate FastSSIM score between two or more (un)compressed inputs.", null, &.{
-            option("in", value("input_path", []const u8, null, parsers.parsePath),
+            option("in", value("input_path", []const u8, null, parsers.parseInPath),
                 \\Path from which (un)compressed frames are to be demuxed and decoded by FFmpeg for scoring.
                 \\This option must be passed more than once.
             ),
@@ -73,33 +74,38 @@ const vpxl_cmd: CommandT = command(
             \\Show this help message and exit.
         ),
         option("pix", value("pixel_format", []const u8, "auto", parsers.parsePixelFormat),
-            \\Utilizing the source frames' full bit depth during encoding, ensure the compressed output's
-            \\frames are in the given format; VPXL supports encoding to the following: yuv420p yuv422p
-            \\yuv440p yuv444p yuv420p10le yuv422p10le yuv440p10le yuv444p10le yuv420p12le yuv422p12le
-            \\yuv440p12le yuv444p12le yuva420p yuva422p yuva440p yuva444p yuva420p10le yuva422p10le
-            \\yuva440p10le yuva444p10le yuva420p12le yuva422p12le yuva440p12le yuva444p12le
+            \\Prior to encoding, correctly convert input frames to the given pixel format; VPXL's
+            \\supported values: yuv420p yuv422p yuv440p yuv444p yuv420p10le yuv422p10le yuv440p10le
+            \\yuv444p10le yuv420p12le yuv422p12le yuv440p12le yuv444p12le yuva420p yuva422p yuva440p
+            \\yuva444p yuva420p10le yuva422p10le yuva440p10le yuva444p10le yuva420p12le yuva422p12le
+            \\yuva440p12le yuva444p12le auto
         ),
-        option("in", value("input_path", []const u8, null, parsers.parsePath),
+        option("in", value("input_path", []const u8, null, parsers.parseInPath),
             \\Path from which (un)compressed frames are to be demuxed and decoded by FFmpeg for encoding.
         ),
-        option("out", value("output_path", []const u8, null, parsers.parsePath),
+        option("out", value("output_path", []const u8, null, parsers.parseOutPath),
             \\Path to which VPXL-compressed and FFmpeg-muxed frames are to be written. FFmpeg will mux to
             \\the container format specified by output_path's file extension.
         ),
         option("pass", value("vpxl_pass", []const u8, "only", parsers.parsePass),
             \\VPXL encoding pass to employ: 'only' refers to the only pass of one-pass encoding. 'first'
             \\refers to the first pass of two-pass encoding. 'second' refers to the second pass of two-
-            \\pass encoding. 
+            \\pass encoding.
         ),
-        option("gop", value("gop_duration", []const u8, "auto", parsers.parseTime), " "),
+        option("gop", value("gop_duration", []const u8, "auto", parsers.parseTime),
+            \\Keyframes will be placed at intervals of the given duration or frame count. 'auto' uses a
+            \\fast perceptual heuristic to detect scene changes, providing near-optimally efficient
+            \\keyframe placement at convenient places for seeking from and cutting to. Given this logic,
+            \\values of 0 or 0s/ms produce all-intra streams.
+        ),
         option("full", value("", bool, false, parsers.parseBool),
-            \\Preserve full-range when using -pix. This will reduce playback compatibility.
+            \\Preserve full-range when using option -pix. This will reduce playback compatibility.
         ),
         option("pp", value("", bool, false, parsers.parseBool),
-            \\At the cost of reduced compatibility, lossily preprocesses input frames for improved coding
-            \\efficiency: First, crops out uniform letterboxes and pillarbars within consistent GOPs.
-            \\Then, denoises imperceptibly noisy frames. And lastly, converts CFR inputs to VFR and drops
-            \\perceptually-duplicate frames.
+            \\At the cost of reduced playback compatibility, lossily preprocesses input frames for
+            \\improved coding efficiency: First, crops out uniform letterboxes and pillarbars within
+            \\consistent GOPs. Then, increases 8-bit inputs to 10-bit and denoises imperceptibly noisy
+            \\frames. And lastly, converts CFR inputs to VFR, dropping perceptually-duplicate frames.
         ),
         option("resume", value("", bool, true, parsers.parseBool),
             \\Allow automatic resumption of a previously-interrupted encoding; pass 'first' cannot be
@@ -112,9 +118,10 @@ const vpxl_cmd: CommandT = command(
 );
 
 //
-// Almost all parts of the following exist in the binary and affect RUNTIME performance.
+// Almost all parts of the following exist in the binary and directly affect RUNTIME performance.
 //
 
+/// Cova parsing callback functions
 const parsers = struct {
     pub fn parseDeadline(arg: []const u8, _: mem.Allocator) ![]const u8 {
         const deadlines = [_][]const u8{ "fast", "good", "best" };
@@ -139,7 +146,17 @@ const parsers = struct {
         return error.PixelFormatUnsupportedByVPXL;
     }
 
-    pub fn parsePath(arg: []const u8, _: mem.Allocator) ![]const u8 {
+    pub fn parseInPath(arg: []const u8, _: mem.Allocator) ![]const u8 {
+        os.access(arg, os.F_OK) catch |err| {
+            // Windows doesn't make stdin/out/err available via system path,
+            // so this will have to be handled outside Cova
+            if (mem.eql(u8, arg, "-")) return arg;
+            return err;
+        };
+        return arg;
+    }
+
+    pub fn parseOutPath(arg: []const u8, _: mem.Allocator) ![]const u8 {
         os.access(arg, os.F_OK) catch |err| {
             // Windows doesn't make stdin/out/err available via system path,
             // so this will have to be handled outside Cova
@@ -169,6 +186,7 @@ const parsers = struct {
     }
 };
 
+/// Cova printing callback functions
 const printers = struct {
     fn commandUsage(root: anytype, wr: anytype, _: mem.Allocator) !void {
         _ = try wr.write("USAGE   ");
@@ -178,6 +196,14 @@ const printers = struct {
             for (opts) |opt| {
                 _ = try wr.write("[" ++ @TypeOf(opt).long_prefix.?);
                 _ = try wr.write(opt.name);
+                const child_type = opt.val.childType();
+                const isOptional = mem.eql(u8, child_type, "bool");
+                try wr.writeByte('=');
+                if (active_scheme.one) |v| _ = try wr.write(v);
+                try wr.writeByte(if (isOptional) '[' else '<');
+                _ = try wr.write(child_type);
+                try wr.writeByte(if (isOptional) ']' else '>');
+                if (active_scheme.one) |_| _ = try wr.write(zero);
                 try wr.writeByte(']');
             }
         }
@@ -185,10 +211,9 @@ const printers = struct {
     }
 
     fn commandHelp(root: anytype, wr: anytype, _: mem.Allocator) !void {
-        const indent = @TypeOf(root.*).indent_fmt;
-
         try root.usage(wr);
 
+        const indent = @TypeOf(root.*).indent_fmt;
         _ = try wr.write("(SUB)COMMANDS" ++ ns ++ ns ++ indent ++ indent);
         _ = try wr.write(root.name);
         _ = try wr.write(": ");
@@ -286,7 +311,7 @@ fn configureColorScheme() !void {
         try os.getrandom(mem.asBytes(&tmp));
         break :seed tmp;
     });
-    active_scheme = schemes[sfc.random().int(u64) % schemes.len];
+    active_scheme = schemes[sfc.random().uintLessThan(u64, schemes.len)];
 }
 
 fn configureEscapeCodes(pipe: fs.File, it: *cova.ArgIteratorGeneric) !void {
@@ -311,6 +336,7 @@ fn configureEscapeCodes(pipe: fs.File, it: *cova.ArgIteratorGeneric) !void {
     if (available and flag) try configureColorScheme();
 }
 
+/// runVPXL() is the entry point for the CLI.
 pub fn runVPXL(pipe: fs.File, ally: mem.Allocator) !void {
     const wr = pipe.writer();
     try wr.writeByte(nb);
