@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-// Copyright © 2023 The VPXL Contributors. All rights reserved.
+// Copyright © 2024 The VPXL Contributors. All rights reserved.
 // Contributors responsible for this file:
 // @p7r0x7 <mattrbonnette@pm.me>
 
