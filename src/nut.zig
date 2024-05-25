@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright © 2024 The VPXL Contributors. All rights reserved.
+// Contributors responsible for this file:
+// @notcancername <notcancername@protonmail.com>
+
 const std = @import("std");
 const assert = std.debug.assert;
 

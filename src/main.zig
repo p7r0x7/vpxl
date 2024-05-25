@@ -11,9 +11,8 @@ pub fn main() !void {
     const stderr = io.getStdErr();
     {
         // Run VPXL's CLI using an arena-wrapped stack allocator.
-        var buffer: [9 << 10]u8 = undefined; // Adjust as necessary.
-        var fba = heap.FixedBufferAllocator.init(buffer[0..]);
+        var buf: [9 << 10]u8 = undefined; // Adjust as necessary.
+        var fba = heap.FixedBufferAllocator.init(buf[0..]); // Not reused
         try cli.runVPXL(stderr, fba.allocator());
-        fba.reset();
     }
 }
