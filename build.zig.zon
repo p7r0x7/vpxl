@@ -4,7 +4,7 @@
     .dependencies = .{
         .cova = .{
             .url = "https://github.com/00JCIV00/cova/archive/v0.10.1.tar.gz",
-            .hash = "122043dfafc4e186356a1192b374afc5722228990e1640f89855cd3c0dd37ec71366",
+            .hash = "1220aad9b0a3c30c0df549f49fbb22307a3d22a12add241551e387c4856bb6a30dd5",
         },
     },
     .paths = .{ "src", "build.zig", "build.zig.zon" },
