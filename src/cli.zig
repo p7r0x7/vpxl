@@ -7,6 +7,7 @@ const cova = @import("cova");
 const io = @import("std").io;
 const os = @import("std").os;
 const fs = @import("std").fs;
+const fmt = @import("std").fmt;
 const mem = @import("std").mem;
 const db = @import("std").debug;
 const ascii = @import("std").ascii;
@@ -37,6 +38,7 @@ const VPXLCmd = cmd: {
     cmd_config.val_config.indent_fmt = spaces[0..4];
     cmd_config.val_config.add_base_floats = false;
     cmd_config.val_config.add_base_ints = false;
+    cmd_config.val_config.custom_types = &.{u8};
     cmd_config.val_config.use_slim_base = true;
     cmd_config.val_config.max_children = 1;
 
@@ -54,7 +56,7 @@ const VPXLCmd = cmd: {
 
 /// Comptime-assembled Cova command definition for VPXL
 const vpxl_cmd: VPXLCmd = command("vpxl",
-    \\Encode a(n) (un)compressed input with the VPXL VP9 video encoder, courtesy of Matt R Bonnette (@p7r0x7) et al.
+    \\Encode a(n) (un)compressed input with the VPXL VP9 video encoder, courtesy of Maxine R Bonnette (@p7r0x7) et al.
 , &.{
     command("xpsnr",
         \\Calculate XPSNR score between two or more (un)compressed inputs.
@@ -99,22 +101,26 @@ const vpxl_cmd: VPXLCmd = command("vpxl",
         \\the container format specified by output_path's file extension.
     ),
 }, &.{
+    option(false, "qp", null, value("quantizer", u8, 64, parsing.parseInt(u8, 10), ""),
+        \\VPXL's arbitrarily-defined quantization parameter to employ: 0 (lossless) to 255 (most lossy)
+    ),
     option(false, "pix", null, value("pixel_format", []const u8, "auto", parsing.parsePixelFormat, ""),
-        \\Prior to encoding, correctly convert input frames to the given pixel format; VPXL's
-        \\supported values: yuv420p yuv422p yuv440p yuv444p yuv420p10le yuv422p10le yuv440p10le
-        \\yuv444p10le yuv420p12le yuv422p12le yuv440p12le yuv444p12le yuva420p yuva422p yuva440p
-        \\yuva444p yuva420p10le yuva422p10le yuva440p10le yuva444p10le yuva420p12le yuva422p12le
-        \\yuva440p12le yuva444p12le auto
+        \\Prior to encoding, correctly convert input
+        \\frames to the given pixel format; VPXL's supported values: yuv420p yuv422p yuv440p yuv444p
+        \\yuv420p10le yuv422p10le yuv440p10le yuv444p10le yuv420p12le yuv422p12le yuv440p12le
+        \\yuv444p12le yuva420p yuva422p yuva440p yuva444p yuva420p10le yuva422p10le yuva440p10le
+        \\yuva444p10le yuva420p12le yuva422p12le yuva440p12le yuva444p12le auto
     ),
     option(false, "pass", null, value("vpxl_pass", []const u8, "only", parsing.parsePass, ""),
-        \\VPXL encoding pass to employ: 'only' refers to the only pass of one-pass encoding. 'first'
-        \\refers to the first pass of two-pass encoding. 'second' refers to the second pass of two-
-        \\pass encoding.
+        \\VPXL encoding pass to employ: 'only' refers to
+        \\the only pass of one-pass encoding. 'first' refers to the first pass of two-pass encoding.
+        \\'second' refers to the second pass of two- pass encoding.
     ),
     option(false, "gop", null, value("gop_duration", []const u8, "auto", parsing.parseTime, ""),
-        \\Terminate GOPs after gop_duration if it is terminated by a unit of time (s/ms/μs/us);
-        \\otherwise, terminate GOPs after gop_duration ÷ framerate. 'auto' uses one of two fast, perceptual
-        \\heuristics to detect scene changes, depending on the preset and quality level. Zero inputs produce all-intra streams.
+        \\Terminate GOPs after gop_duration if it is
+        \\terminated by a unit of time (s/ms/μs/us); otherwise, terminate GOPs after gop_duration ÷
+        \\framerate. 'auto' uses one of two fast, perceptual heuristics to detect scene changes,
+        \\depending on the preset and quality level. Zero inputs produce all-intra streams.
     ),
     option(false, "full", null, value("", bool, false, parsing.parseBool, ""),
         \\Preserve full-range when using option -pix. This will reduce playback compatibility.
@@ -297,13 +303,13 @@ const printing = struct {
             } else {
                 rcw.rune_count = 0;
                 if (printing.active_scheme) |_| try print(wr, .{zero});
-                try print(wr, .{ns ++ indent});
+                try print(wr, .{ns ++ indent ++ indent});
                 if (printing.active_scheme) |v| try print(wr, .{v.one});
                 try print(rcw.writer(), .{if (next.?[0] == spaces[0]) next.?[1..] else next.?});
             }
         }
         if (printing.active_scheme) |_| try print(wr, .{zero});
-        try print(wr, .{ns});
+        try print(wr, .{ns ++ ns});
     }
 
     fn commandHelp(root: anytype, wr: anytype, _: mem.Allocator) !void {
@@ -323,7 +329,7 @@ const printing = struct {
                     } else {
                         rcw.rune_count = 0;
                         if (printing.active_scheme) |_| try print(wr, .{zero});
-                        try print(wr, .{ns ++ indent});
+                        try print(wr, .{ns ++ indent ++ indent});
                         if (printing.active_scheme) |v| try print(wr, .{v.one});
                         try print(rcw.writer(), .{if (next.?[0] == spaces[0]) next.?[1..] else next.?});
                     }
@@ -341,24 +347,28 @@ const printing = struct {
             }
         }
         if (root.opts) |opts| {
-            try print(wr, .{(spaces[0..1] ** 90) ++ "options:" ++ ns ++ ns});
+            var done = false;
             for (opts) |opt| {
                 if (opt.hidden) continue;
                 if (opt.inheritable) continue;
+                if (!done) {
+                    try print(wr, .{(spaces[0..1] ** 90) ++ "options:" ++ ns ++ ns});
+                    done = true;
+                }
                 try opt.help(wr);
                 try print(wr, .{nb});
             }
         }
-        var tmp: ?@TypeOf(root), var done = .{ root, false };
+        var done, var tmp: ?@TypeOf(root) = .{ false, root };
         while (tmp) |cmd| : (tmp = cmd.parent_cmd) {
             if (cmd.opts) |opts| {
-                if (!done) {
-                    try print(wr, .{ns ++ "GLOBAL" ++ (spaces[0..1] ** 84) ++ "options:" ++ ns ++ ns});
-                    done = true;
-                }
                 for (opts) |opt| {
                     if (opt.hidden) continue;
                     if (!opt.inheritable) continue;
+                    if (!done) {
+                        try print(wr, .{ns ++ "GLOBAL" ++ (spaces[0..1] ** 84) ++ "options:" ++ ns ++ ns});
+                        done = true;
+                    }
                     try opt.help(wr);
                     try print(wr, .{nb});
                 }
@@ -367,11 +377,50 @@ const printing = struct {
     }
 
     fn valueUsage(val: anytype, wr: anytype, _: mem.Allocator) !void {
-        try print(wr, .{val.name()});
+        if (printing.active_scheme) |v| try print(wr, .{v.one});
+        try print(wr, .{'"'});
+        const val_name = val.name();
+        if (val_name.len > 0) try print(wr, .{ val_name, spaces[0] });
+        try print(wr, .{'('});
+        const child_type = val.childType();
+        if (mem.eql(u8, child_type, "[]const u8")) try print(wr, .{"string"}) else try print(wr, .{child_type});
+        try print(wr, .{")\""});
+        if (printing.active_scheme) |_| try print(wr, .{zero});
+
+        var str: []const u8 = undefined;
+        if (mem.eql(u8, child_type, "[]const u8")) {
+            str = val.generic.string.default_val orelse return;
+        } else if (mem.eql(u8, child_type, "bool")) {
+            str = if (val.generic.bool.default_val orelse return) "true" else "false";
+        } else if (mem.eql(u8, child_type, "u8")) {
+            var buf: [3]u8 = undefined;
+            str = try fmt.bufPrint(buf[0..], "{d}", .{val.generic.u8.default_val orelse return});
+        } else db.panic("{s}", .{"Unimplemented type."});
+        try print(wr, .{ "  default: ", str });
     }
 
     fn valueHelp(val: anytype, wr: anytype, _: mem.Allocator) !void {
-        try val.usage(wr);
+        const indent = VPXLCmd.indent_fmt;
+        try print(wr, indent);
+        var rcw = nonCSIRuneCountingWriter(wr);
+        try val.usage(rcw.writer());
+        try print(rcw.writer(), .{spaces[0..2]});
+        if (printing.active_scheme) |v| try print(wr, .{v.two});
+        var it = CharacterGroupIterator{ .buf = val.description() };
+        var next: ?[]const u8 = it.first();
+        while (next != null) : (next = it.next()) {
+            if (rcw.rune_count + next.?.len <= margin) {
+                try print(rcw.writer(), .{next.?});
+            } else {
+                rcw.rune_count = 0;
+                if (printing.active_scheme) |_| try print(wr, .{zero});
+                try print(wr, .{ns ++ indent});
+                if (printing.active_scheme) |v| try print(wr, .{v.two});
+                try print(rcw.writer(), .{if (next.?[0] == spaces[0]) next.?[1..] else next.?});
+            }
+        }
+        if (printing.active_scheme) |_| try print(wr, .{zero});
+        try print(wr, .{ns});
     }
 
     fn optionUsage(opt: anytype, wr: anytype, _: mem.Allocator) !void {
@@ -382,24 +431,7 @@ const printing = struct {
             }
         }
         try print(wr, .{spaces[0]});
-
-        if (printing.active_scheme) |v| try print(wr, .{v.one});
-        try print(wr, .{'"'});
-        const val_name = opt.val.name();
-        if (val_name.len > 0) try print(wr, .{ val_name, spaces[0] });
-        try print(wr, .{'('});
-        const child_type = opt.val.childType();
-        if (mem.eql(u8, child_type, "[]const u8")) try print(wr, .{"string"}) else try print(wr, .{child_type});
-        try print(wr, .{")\""});
-        if (printing.active_scheme) |_| try print(wr, .{zero});
-
-        var default_as_string: ?[]const u8 = null;
-        if (mem.eql(u8, child_type, "[]const u8")) {
-            default_as_string = opt.val.generic.string.default_val;
-        } else if (mem.eql(u8, child_type, "bool")) {
-            default_as_string = if (opt.val.generic.bool.default_val) |v| if (v) "true" else "false" else return;
-        }
-        if (default_as_string) |str| try print(wr, .{ "  default: ", str });
+        try opt.val.usage(wr);
     }
 
     fn optionHelp(opt: anytype, wr: anytype, _: mem.Allocator) !void {
@@ -488,9 +520,9 @@ pub fn runVPXL(pipe: fs.File, ally: mem.Allocator) !void {
             try bfwr.flush();
             return;
         };
-        var mlem = try cmd.getVals(.{});
-        const z = mlem.get("input_path");
-        if (cmd.checkOpts(&.{"help"}, .{}) or !z.?.generic.string.is_set) {
+        var values = try cmd.getVals(.{});
+        const input = values.get("input_path");
+        if (cmd.checkOpts(&.{"help"}, .{}) or !input.?.generic.string.is_set) {
             try cmd.help(bfwr.writer());
             try bfwr.flush();
         }
@@ -499,6 +531,14 @@ pub fn runVPXL(pipe: fs.File, ally: mem.Allocator) !void {
 
 /// Parsing callback functions for Cova values
 const parsing = struct {
+    fn parseInt(comptime T: type, base: u8) fn ([]const u8, mem.Allocator) anyerror!T {
+        return struct {
+            fn parseInt(arg: []const u8, _: mem.Allocator) !T {
+                return fmt.parseInt(T, arg, base);
+            }
+        }.parseInt;
+    }
+
     fn parseDeadline(arg: []const u8, _: mem.Allocator) ![]const u8 {
         const deadlines = [_][]const u8{ "fast", "good", "best" };
         for (deadlines) |str| if (ascii.eqlIgnoreCase(str, arg)) return str;
