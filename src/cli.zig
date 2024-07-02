@@ -116,7 +116,12 @@ const vpxl_cmd: VPXLCmd = command("vpxl",
         \\the only pass of one-pass encoding. 'first' refers to the first pass of two-pass encoding.
         \\'second' refers to the second pass of two- pass encoding.
     ),
-    option(false, "gop", null, value("gop_duration", []const u8, "auto", parsing.parseTime, ""),
+    option(false, "gop", null, value("gop_duration", []const u8, "auto", parsing.parseTime, ""), if (builtin.os.tag == .windows)
+        \\Terminate GOPs after gop_duration if it is
+        \\terminated by a unit of time (s/ms/us); otherwise, terminate GOPs after gop_duration /
+        \\framerate. 'auto' uses one of two fast, perceptual heuristics to detect scene changes,
+        \\depending on the preset and quality level. Zero inputs produce all-intra streams.
+    else
         \\Terminate GOPs after gop_duration if it is
         \\terminated by a unit of time (s/ms/μs/us); otherwise, terminate GOPs after gop_duration ÷
         \\framerate. 'auto' uses one of two fast, perceptual heuristics to detect scene changes,
@@ -340,7 +345,7 @@ const printing = struct {
             try print(wr, .{nb});
         }
         if (root.vals) |vals| {
-            try print(wr, .{(spaces[0..1] ** 91) ++ "values:" ++ ns ++ ns});
+            try print(wr, .{(spaces[0..1] ** 89) ++ "values:" ++ ns ++ ns});
             for (vals) |val| {
                 try val.help(wr);
                 try print(wr, .{nb});
@@ -352,7 +357,7 @@ const printing = struct {
                 if (opt.hidden) continue;
                 if (opt.inheritable) continue;
                 if (!done) {
-                    try print(wr, .{(spaces[0..1] ** 90) ++ "options:" ++ ns ++ ns});
+                    try print(wr, .{(spaces[0..1] ** 88) ++ "options:" ++ ns ++ ns});
                     done = true;
                 }
                 try opt.help(wr);
@@ -366,7 +371,7 @@ const printing = struct {
                     if (opt.hidden) continue;
                     if (!opt.inheritable) continue;
                     if (!done) {
-                        try print(wr, .{ns ++ "GLOBAL" ++ (spaces[0..1] ** 84) ++ "options:" ++ ns ++ ns});
+                        try print(wr, .{ns ++ "GLOBAL" ++ (spaces[0..1] ** 82) ++ "options:" ++ ns ++ ns});
                         done = true;
                     }
                     try opt.help(wr);
@@ -400,7 +405,7 @@ const printing = struct {
     }
 
     fn valueHelp(val: anytype, wr: anytype, _: mem.Allocator) !void {
-        const indent = VPXLCmd.indent_fmt;
+        const indent = @TypeOf(val.*).indent_fmt;
         try print(wr, indent);
         var rcw = nonCSIRuneCountingWriter(wr);
         try val.usage(rcw.writer());
