@@ -3,8 +3,8 @@
     .version = "0.0.0",
     .dependencies = .{
         .cova = .{
-            .url = "https://github.com/00JCIV00/cova/archive/v0.10.1.tar.gz",
-            .hash = "1220dbe5c66d4395086aedde8ce288d7309d2e2847cabfad6b1d0f4affa6c00e45cc",
+            .url = "https://github.com/00JCIV00/cova/archive/main.tar.gz",
+            .hash = "122073922013698dd2c2339cb9fa37436408eb97d033f166b817d8a12193c47c2af3",
         },
     },
     .paths = .{ "src", "build.zig", "build.zig.zon" },

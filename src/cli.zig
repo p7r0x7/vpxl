@@ -102,7 +102,7 @@ const vpxl_cmd: VPXLCmd = command("vpxl",
     ),
 }, &.{
     option(false, "qp", null, value("quantizer", u8, 64, parsing.parseInt(u8, 10), ""),
-        \\VPXL's arbitrarily-defined quantization parameter to employ: 0 (lossless) to 255 (most lossy)
+        \\VPXL logarithmic quantizer parameter to employ: 0 (lossless) to 255 (most lossy)
     ),
     option(false, "pix", null, value("pixel_format", []const u8, "auto", parsing.parsePixelFormat, ""),
         \\Prior to encoding, correctly convert input
@@ -289,7 +289,7 @@ const printing = struct {
         }
     }
 
-    fn commandUsage(root: anytype, wr: anytype, _: mem.Allocator) !void {
+    fn commandUsage(root: anytype, wr: anytype, _: ?mem.Allocator) !void {
         try print(wr, .{ "USAGE   ", root.name, spaces[0] });
         if (root.sub_cmds != null) try print(wr, " [command]");
         if (root.vals) |vals| for (vals) |val| try print(wr, .{ " <", val.name(), '>' });
@@ -317,7 +317,7 @@ const printing = struct {
         try print(wr, .{ns ++ ns});
     }
 
-    fn commandHelp(root: anytype, wr: anytype, _: mem.Allocator) !void {
+    fn commandHelp(root: anytype, wr: anytype, _: ?mem.Allocator) !void {
         try root.usage(wr);
         if (root.sub_cmds) |cmds| {
             const indent = @TypeOf(root.*).indent_fmt;
@@ -381,14 +381,20 @@ const printing = struct {
         }
     }
 
-    fn valueUsage(val: anytype, wr: anytype, _: mem.Allocator) !void {
+    fn valueUsage(val: anytype, wr: anytype, _: ?mem.Allocator) !void {
         if (printing.active_scheme) |v| try print(wr, .{v.one});
         try print(wr, .{'"'});
         const val_name = val.name();
         if (val_name.len > 0) try print(wr, .{ val_name, spaces[0] });
         try print(wr, .{'('});
         const child_type = val.childType();
-        if (mem.eql(u8, child_type, "[]const u8")) try print(wr, .{"string"}) else try print(wr, .{child_type});
+        if (mem.eql(u8, child_type[0..1], "u")) {
+            try print(wr, .{"uint"});
+        } else if (mem.eql(u8, child_type[0..1], "i")) {
+            try print(wr, .{"int"});
+        } else if (mem.eql(u8, child_type, "[]const u8")) {
+            try print(wr, .{"string"});
+        } else try print(wr, .{child_type});
         try print(wr, .{")\""});
         if (printing.active_scheme) |_| try print(wr, .{zero});
 
@@ -404,7 +410,7 @@ const printing = struct {
         try print(wr, .{ "  default: ", str });
     }
 
-    fn valueHelp(val: anytype, wr: anytype, _: mem.Allocator) !void {
+    fn valueHelp(val: anytype, wr: anytype, _: ?mem.Allocator) !void {
         const indent = @TypeOf(val.*).indent_fmt;
         try print(wr, indent);
         var rcw = nonCSIRuneCountingWriter(wr);
@@ -428,7 +434,7 @@ const printing = struct {
         try print(wr, .{ns});
     }
 
-    fn optionUsage(opt: anytype, wr: anytype, _: mem.Allocator) !void {
+    fn optionUsage(opt: anytype, wr: anytype, _: ?mem.Allocator) !void {
         try print(wr, .{ @TypeOf(opt.*).long_prefix.?, opt.long_name.? });
         if (opt.alias_long_names) |alias_long_names| {
             for (alias_long_names) |alias_long_name| {
@@ -439,7 +445,7 @@ const printing = struct {
         try opt.val.usage(wr);
     }
 
-    fn optionHelp(opt: anytype, wr: anytype, _: mem.Allocator) !void {
+    fn optionHelp(opt: anytype, wr: anytype, _: ?mem.Allocator) !void {
         try print(wr, .{@TypeOf(opt.*).indent_fmt.?});
         var rcw = nonCSIRuneCountingWriter(wr);
         try opt.usage(rcw.writer());
@@ -500,10 +506,12 @@ pub fn runVPXL(pipe: fs.File, ally: mem.Allocator) !void {
     defer printing.print(pipe.writer(), .{nb}) catch db.panic("{s}", .{"Couldn't print final newline."});
 
     const vpxl_cli = try vpxl_cmd.init(ally, .{
-        .add_cmd_help_group = .DoNotAdd,
-        .add_opt_help_group = .DoNotAdd,
-        .add_help_cmds = false,
-        .add_help_opts = false,
+        .help_config = .{
+            .add_cmd_help_group = .DoNotAdd,
+            .add_opt_help_group = .DoNotAdd,
+            .add_help_cmds = false,
+            .add_help_opts = false,
+        },
     });
     defer vpxl_cli.deinit();
     defer if (builtin.mode == .Debug) cova.utils.displayCmdInfo(VPXLCmd, vpxl_cli, ally, bfwr.writer(), false) catch
