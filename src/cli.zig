@@ -282,8 +282,8 @@ const printing = struct {
     inline fn print(wr: anytype, strs: anytype) !void {
         inline for (strs) |str| {
             switch (@typeInfo(@TypeOf(str))) {
-                .Pointer => try wr.writeAll(str),
-                .Int, .ComptimeInt => try wr.writeByte(str),
+                .pointer => try wr.writeAll(str),
+                .int, .comptime_int => try wr.writeByte(str),
                 else => @compileError("Expected byte or string, got " ++ @typeName(@TypeOf(str))),
             }
         }
