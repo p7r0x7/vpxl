@@ -14,10 +14,6 @@ const ascii = @import("std").ascii;
 const builtin = @import("builtin");
 const utf8 = @import("std").unicode;
 
-//
-// The following do not exist in the binary as they appear below; they are, instead, efficiently re-expressed at COMPTIME.
-//
-
 /// Cova configuration type identity
 const VPXLCmd = cmd: {
     var cmd_config = cova.Command.Config.optimized(.{ .no_formats = true, .remove_features = true });
@@ -180,10 +176,6 @@ inline fn replaceNewlines(comptime str: []const u8) []const u8 {
         return &out;
     }
 }
-
-//
-// Almost all parts of the following exist in the binary and directly affect RUNTIME performance characteristics.
-//
 
 /// Printing callback functions for Cova commands and options
 const printing = struct {
