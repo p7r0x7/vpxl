@@ -45,7 +45,7 @@ fn executable(b: *Build, name: []const u8, root_path: []const u8, target: Build.
         .strip = optimize == .ReleaseFast or optimize == .ReleaseSmall,
         .omit_frame_pointer = optimize != .Debug,
         .root_source_file = b.path(root_path),
-        .unwind_tables = optimize == .Debug,
+        .unwind_tables = if (optimize == .Debug) .sync else .none,
         .optimize = optimize,
         .target = target,
         .name = name,
