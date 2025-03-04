@@ -1,10 +1,15 @@
 .{
-    .name = "vpxl",
+    .name = .vpxl,
+    .fingerprint = 0x980396813d5f69f5, // Changing this has security and trust implications.
     .version = "0.0.0",
     .dependencies = .{
+        .builddef = .{
+            .url = "https://github.com/p7r0x7/builddef/archive/master.tar.gz",
+            .hash = "12208f29f369eeca5248464bec120a80cfa3b430b39bc2700e5a16c4bd24fd733291",
+        },
         .cova = .{
-            .url = "https://github.com/Beyley/cova/archive/main.tar.gz",
-            .hash = "1220b70aee16e659e30eb0c066777f930319f74555fe51a8646725263ecb19ba92a3",
+            .url = "https://github.com/00JCIV00/cova/archive/zig-v0.14.tar.gz",
+            .hash = "12201386743e7862d71bdb723ec0517a16b0f324acf2710fc0c5329e31ae029d0dd4",
         },
     },
     .paths = .{ "src", "build.zig", "build.zig.zon" },

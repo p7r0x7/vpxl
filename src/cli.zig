@@ -157,11 +157,9 @@ const vpxl_cmd: VPXLCmd = command("vpxl",
 fn command(cmd: []const u8, desc: []const u8, cmds: ?[]const VPXLCmd, vals: ?[]const VPXLCmd.ValueT, opts: ?[]const VPXLCmd.OptionT) VPXLCmd {
     return .{ .name = cmd, .vals = vals, .sub_cmds = cmds, .description = replaceNewlines(desc), .hidden = desc.len == 0, .opts = opts, .allow_inheritable_opts = true };
 }
-
 fn option(inherit: bool, opt: []const u8, aliases: ?[]const []const u8, val: VPXLCmd.ValueT, desc: []const u8) VPXLCmd.OptionT {
     return .{ .val = val, .name = opt, .long_name = opt, .description = replaceNewlines(desc), .hidden = desc.len == 0, .alias_long_names = aliases, .inheritable = inherit };
 }
-
 fn value(val: []const u8, comptime ValT: type, default: ?ValT, parse: ?*const fn ([]const u8, mem.Allocator) anyerror!ValT, desc: []const u8) VPXLCmd.ValueT {
     return VPXLCmd.ValueT.ofType(ValT, .{ .name = val, .parse_fn = parse, .default_val = default, .description = replaceNewlines(desc) });
 }
@@ -180,8 +178,8 @@ inline fn replaceNewlines(comptime str: []const u8) []const u8 {
 /// Printing callback functions for Cova commands and options
 const printing = struct {
     const schemes = [_]ColorScheme{
-        ColorScheme{ .one = "\x1b[40;1;38;5;230m", .two = "\x1b[38;5;111m" }, // discord: buttercream, blurple
-        //ColorScheme{ .one = "\x1b[40;1;38;5;220m", .two = "\x1b[38;5;36m" }, // transit: schoolbus yellow, highway sign green
+        ColorScheme{ .one = "\x1b[48;5;232;38;5;230;1m", .two = "\x1b[38;5;111m" }, // discord: buttercream, blurple
+        //ColorScheme{ .one = "\x1b[48;5;232;38;5;220;1m", .two = "\x1b[38;5;36m" }, // transit: schoolbus yellow, highway sign green
     };
     const ColorScheme = struct { one: []const u8, two: []const u8 };
     var active_scheme: ?ColorScheme = null; // Global runtime variable.
@@ -527,7 +525,7 @@ pub fn runVPXL(pipe: fs.File, ally: mem.Allocator) !void {
         };
         var values = try cmd.getVals(.{});
         const input = values.get("input_path");
-        if (cmd.checkOpts(&.{"help"}, .{}) or !input.?.generic.string.is_set) {
+        if (cmd.checkOpts(&.{"help"}, .{}) or input == null) {
             try cmd.help(bfwr.writer());
             try bfwr.flush();
         }
